@@ -1,0 +1,70 @@
+IN 10H
+MVI A,FFH ;Initialize A with 255
+LXI H,0900H ;First Memory Address 0900H
+LXI D,0008H ;Initialize D as 8, used for count of zeros. 
+;Initialized as 8 because of 0000 0000.
+;When we reach 0000 0000 we have to finish and can't go back to do ZEROCOUNT
+
+;a)Store 255-0 in memory
+LOOPA:
+MOV M,A ;Store A (current number) to memory
+MOV B,A ;Copy A (current number) as Backup
+
+MVI A,08H ;Counter of 8 bits. We ensure that we check all 8 bits of each number
+
+;b)Count zeros in each number (store in DE)
+ZEROCHECK:
+CPI 00H ;Have we checked all 8 bits of the number?
+JZ CONT ;Then continune to the next number
+DCR A
+MOV C,A ;Temporarily move the counter to C
+MOV A,B ;Retrieve the current number from B (Backup)
+RRC ;Rotate to get one bit out of the number
+MOV B,A ;Copy the current number back to B for Backup
+MOV A,C ;Retrieve the counter
+JNC ZEROCOUNT ;If from RRC we've got a 0 increase D which counts zeros
+JMP ZEROCHECK ;Go to the next bit to check
+
+CONT:
+MOV A,B ;Retrieve the current number from B (Backup)
+INX H ;Increase memory address by one
+DCR A ;Decrease A by 1
+CPI 00H ;Check if we've reached 0000 0000
+JNZ LOOPA ;If not continue storing numbers
+
+JMP INBETWEEN
+
+ZEROCOUNT:
+INX D
+JMP ZEROCHECK
+
+;c)Get the amount of numbers between 10H and 80H in C
+INBETWEEN:
+;Store DE in memory so that we don't lose it when it finishes running
+INX H
+MOV M,D 
+INX H
+MOV M,E
+
+LXI H,0900H ;We're going through the whole memory to search
+MVI C,00H ;Initialise counter C
+
+;At the beginning of the memory there is 255 which is surely more than 80H
+MORETHAN80:
+MOV A,M ;Store the current number of the memory in A
+CPI 80H ;Compare it with 80H
+INX H ;Next memory address
+JZ INCREASE ;If we've reached 80H increase C
+JNC MORETHAN80 ;If it's still greater than 80H continue in the loop
+CPI 10H ;Compare current number with 10H
+JC END ;If it's less than 10H it moves the end, because we don't need to check the rest
+;If it's equal to 10H it will just continue to INCREASE
+
+INCREASE:
+INR C ;Increase the counter of number between 10H and 80H
+JMP MORETHAN80
+
+END:
+LXI H,0A02H ;Store C in memory so that we don't lose it when it finishes running
+MOV M,C
+END

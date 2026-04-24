@@ -1,0 +1,84 @@
+STARTT:
+MVI E,00H          ; Initialize E register to 00 (clear the value)
+MVI C,03H          ; Load C with 03H (mask used for bitwise operations)
+LDA 2000H          ; Load A with the value from memory location 2000H
+
+FIRST2:
+MOV B,A            ; Copy the value of A to B
+ANA C              ; AND A with C (masking operation)
+CPI 00H            ; Compare A with 00H
+JZ SET00           ; If A == 00H, jump to SET00 (no match, reset)
+
+MOV A,B            ; If A != 00H, restore B back to A
+RRC                ; Rotate A right through carry
+RRC                ; Rotate A right through carry again
+MOV B,A            ; Copy the rotated value to B
+ANA C              ; Perform AND operation between A and C (masking)
+CPI 00H            ; Compare the result with 00H
+JZ SETF01          ; If A == 00H, jump to SETF01 (set value 1)
+
+MVI E,03H          ; Set E to 03H (set value 3)
+MOV A,B            ; Restore A from B
+JMP NEXT2           ; Jump to NEXT2 (continue with next steps)
+
+SETF01:
+MVI E,01H          ; Set E to 01H (set value 1)
+MOV A,B            ; Restore A from B
+JMP NEXT2           ; Jump to NEXT2 (continue with next steps)
+
+SET00:
+MOV A,B            ; Restore A from B
+RRC                ; Rotate A right through carry
+RRC                ; Rotate A right through carry again
+
+NEXT2:
+RRC                ; Rotate A right through carry
+RRC                ; Rotate A right through carry again
+MOV B,A            ; Copy the rotated value to B
+ANA C              ; Perform AND operation between A and C (masking)
+CMP C              ; Compare A with C
+JZ SET_1           ; If A == C, jump to SET_1 (set value 1)
+
+MOV A,B            ; If A != C, restore A from B
+RRC                ; Rotate A right through carry
+RRC                ; Rotate A right through carry again
+MOV B,A            ; Copy the rotated value to B
+ANA C              ; Perform AND operation between A and C (masking)
+CMP C              ; Compare A with C
+JZ SET10           ; If A == C, jump to SET10 (set value 10)
+
+MOV A,E            ; Load the value of E into A
+JMP SHOW           ; Jump to SHOW to display the result
+
+SET_1:
+MOV A,B            ; Restore A from B
+RRC                ; Rotate A right through carry
+RRC                ; Rotate A right through carry again
+MOV B,A            ; Copy the rotated value to B
+ANA C              ; Perform AND operation between A and C (masking)
+CMP C              ; Compare A with C
+JZ SET01           ; If A == C, jump to SET01 (set value 1)
+
+MVI A,0CH          ; Set A to 0CH (set value 12)
+ADD E              ; Add E to A
+JMP SHOW           ; Jump to SHOW to display the result
+
+SET10:
+MVI A,08H          ; Set A to 08H (set value 8)
+ADD E              ; Add E to A
+JMP SHOW           ; Jump to SHOW to display the result
+
+SET01:
+MVI A,04H          ; Set A to 04H (set value 4)
+ADD E              ; Add E to A
+JMP SHOW           ; Jump to SHOW to display the result
+
+SHOW:
+CMA                ; Complement A (invert the bits in A)
+STA 3000H          ; Store the value of A into memory location 3000H (display output)
+JMP STARTT         ; Jump back to STARTT to repeat the process
+
+END
+
+
+

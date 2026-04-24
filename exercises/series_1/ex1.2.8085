@@ -1,0 +1,39 @@
+IN 10H
+MVI D,FEH ;(1111 1110)->LSB LED ON
+MOV A,D 
+STA 3000H ;LSB LED ON
+LXI B,01F4H ;500 decimal -> 1ms*500=1/2 sec for DELB
+
+START:
+LDA 2000H ;Dip Switch Input
+RRC ;Get the LSB
+JNC PAUSE ;If CY=LSB=0 then pause, else...
+RLC ;2 right rotations to get the MSB as it got right rotated before
+RLC
+JC RIGHT ;If CY=MSB=1 move LED right way (->)
+
+;Else move the LED left way (<-)
+MOV E,A ;Save input in E
+MOV A,D ;D represents the bit pattern with 1 LED ON (7 bits '1' and 1 bit '0')
+RLC ;One left rotation so that '0' moves left (left LED ON)
+STA 3000H ;LED Output of the bit pattern
+MOV D,A ;Saves the new bit pattern in D
+CALL DELB
+MOV A,E ;Restores input in A
+JMP START ;Re-checks input from dip switches and repeats the same process
+
+;The same goes for the move right way (->)
+RIGHT:
+MOV E,A 
+MOV A,D
+RRC
+STA 3000H
+CALL DELB
+MOV D,A
+MOV A,E
+JMP START
+
+PAUSE:
+CALL DELB
+JMP START
+END

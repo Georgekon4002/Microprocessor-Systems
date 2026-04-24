@@ -1,0 +1,31 @@
+STARTT:
+LDA 2000H          ; Load the value from memory address 2000H (keyboard data input)
+CPI 00H            ; Compare the value in A with 00H (check if no key is pressed)
+JZ JUM0            ; If A is 00H (no key pressed), jump to JUM0 (skip further processing)
+
+MVI B,FFH          ; Initialize register B with FFH (all bits set to 1)
+
+LOP:               ; Rotate A and B to find the first 1 bit
+RLC                ; Rotate A left through carry (rotate the bits of A and C)
+JC JUM             ; If the carry bit is set (indicating a key press), jump to JUM (process the key)
+MOV C,A            ; Save the rotated value of A to C
+MOV A,B            ; Restore A from B
+RAR                ; Rotate A right through carry (shift the bits in B)
+MOV B,A            ; Store the updated value of A into B
+MOV A,C            ; Restore the rotated value of A from C
+JMP LOP            ; Repeat the loop until a 1 is found (key press detected)
+
+JUM:               ; When 1 is found, display the inverse of B
+MOV A,B            ; Load B into A
+STA 3000H          ; Store the value of A in memory address 3000H (output the result)
+JMP STARTT         ; Jump back to STARTT (begin the process again)
+
+JUM0:              ; If no 1 was found (no key pressed), read the next input
+MVI B,FFH          ; Reinitialize B with FFH (all bits set to 1)
+JMP JUM             ; Jump back to JUM to repeat the process
+
+END
+
+
+
+ 

@@ -1,0 +1,15 @@
+MVI C,08H ;C=8 (decimal) -> Loop Counter
+LDA 2000H ;Dip Switches Input
+
+LOOPA:
+RAL ;Left Rotate
+JC END ;If CY=1 end (When the first '1' is found)
+DCR C
+JNZ LOOPA
+
+END:
+MOV A,C ;A=(8-Loops_Done)
+CMA ;Complement of A as LEDs turn on on 0s
+STA 3000H ;LEDs Output
+RST 1
+END

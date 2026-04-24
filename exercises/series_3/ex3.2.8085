@@ -1,0 +1,73 @@
+START:
+IN 10H
+MVI A,0DH ;A=0000 1101 RST 6.5 Non-Masked
+SIM
+EI ;Enable Interrupts
+MVI D,69H ;K1=105
+MVI E,DDH ;K2=221
+MVI B,06H ;Counter needed to make all 6 digits of the 7-segment empty
+LXI H,0BF0H ;0BF0-0BF5 used by DCD (right to left)
+
+CLEAR:
+MVI M,10H ;10H means empty for the display
+INX H 
+DCR B
+JNZ CLEAR
+
+WAIT:
+JMP WAIT ;Waiting for the interrupt loop
+
+INTR_ROUTINE:
+;Input Least Significant Digit (LSD)
+CALL KIND 
+STA 0BF4H ;Store in 0BF4 to show at the 2nd most left digit of the display
+MOV B,A ;Keep LSD. B=0000 LLLL
+
+;Input Most Significant Digit (MSD)
+CALL KIND 
+STA 0BF5H ;Store in 0BF5 to show at the most left digit of the display
+RRC ;Rotate 4 times so that the MSD's bits come to the front
+RRC ;A before rotation=0000 MMMM
+RRC ;A after rotation=MMMM 0000
+RRC
+ADD B ;A=MMMM LLLL
+
+;Comparisons
+;A<=K1?
+CMP D
+JC BELOW_K1
+JZ BELOW_K1
+
+;A<=K2?
+CMP E
+JC BETWEEN
+JZ BETWEEN
+
+ABOVE_K2:
+MVI A,FBH ;A=1111 1011 LED 2 ON when in (K2,FF]
+JMP LEDS
+
+BETWEEN:
+MVI A,FDH ;A=1111 1101 LED 1 ON when in (K1,K2]
+JMP LEDS
+
+BELOW_K1:
+MVI A,FEH ;A=1111 1110 LED 0 ON when in [0,K1]
+JMP LEDS
+
+LEDS:
+STA 3000H
+
+;Print the number on the display
+PUSH D
+LXI D,0BF0H
+CALL STDM
+POP D
+EI
+
+DISPLAY:
+;Keep printing till new interrupt
+CALL DCD
+JMP DISPLAY
+
+END

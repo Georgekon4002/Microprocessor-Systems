@@ -1,0 +1,59 @@
+MVI A,10H
+STA 0BF2H       ; Clear display memory (position 1)
+STA 0BF3H       ; Clear display memory (position 2)
+STA 0BF4H       ; Clear display memory (position 3)
+STA 0BF5H       ; Clear display memory (position 4)
+MVI A,0DH       ; Enable interrupts (bitmask for RST7.5)
+SIM             ; Set interrupt mask using SIM instruction
+EI
+
+START:
+MVI D,00H       ; Initialize D (flag for interrupt trigger)
+
+WAITT:          ; Wait for interrupt trigger
+MVI A,FFH
+STA 3000H       ; Light up display 
+MOV A,D
+CPI 00H
+JZ WAITT        ; Stay in loop until D is set to 1 by the interrupt
+
+MVI E,00H       ; Initialize counter in E
+
+INPUT:
+MVI A,00H
+STA 3000H       ; Turn off display before delay
+MVI B,03H
+MVI C,E8H       ; Set delay time (03E8H = 1000 decimal = 1 sec)
+CALL DELB       ; Call delay subroutine
+
+MOV A,E
+INR A           ; Increment counter
+DAA             ; Decimal adjust (for BCD)
+MOV E,A
+CPI 60H
+JZ START        ; If counter reaches 60, reset to START
+
+MOV A,E
+ANI 0FH
+STA 0BF0H       ; Store units digit of BCD counter
+
+MOV A,E
+RRC
+RRC
+RRC
+RRC
+ANI 0FH
+STA 0BF1H       ; Store tens digit of BCD counter
+
+CALL DCD        ; Call display subroutine 
+JMP INPUT       ; Repeat loop
+
+; --- INTERRUPT SERVICE ROUTINE ---
+INTR_ROUTINE:
+PUSH PSW        ; Save current status and accumulator
+MVI D,01H       ; Set D to indicate interrupt has occurred
+EI              ; Re-enable interrupts
+POP PSW         ; Restore previous status
+JMP WAITT       ; Return to WAITT loop (re-check D)
+
+END

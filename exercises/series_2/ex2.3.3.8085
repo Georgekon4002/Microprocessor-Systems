@@ -1,0 +1,360 @@
+MVI A,7FH          ; Load A with 7FH (a mask for checking certain bits)
+MVI B,07H          ; Load B with 07H (a mask for checking certain bits)
+MVI C,7FH          ; Load C with 7FH (same mask as A)
+IN 10H             ; Input from port 10H (likely some input device like a keyboard)
+LXI D,0B62H        ; Initialize HL register pair to store character codes in memory location 0B62H
+
+START:
+MOV A,C            ; Copy the value in C to A
+RLC                ; Rotate the contents of A left through carry (shift bits)
+MOV C,A            ; Move the rotated value of A back to C
+CPI FEH            ; Compare A with FEH
+JZ READ1           ; If A == FEH, jump to READ1 (1st line check)
+CPI FDH            ; Compare A with FDH
+JZ READ2           ; If A == FDH, jump to READ2 (2nd line check)
+CPI FBH            ; Compare A with FBH
+JZ READ3           ; If A == FBH, jump to READ3 (3rd line check)
+CPI F7H            ; Compare A with F7H
+JZ READ4           ; If A == F7H, jump to READ4 (4th line check)
+CPI EFH            ; Compare A with EFH
+JZ READ5           ; If A == EFH, jump to READ5 (5th line check)
+CPI DFH            ; Compare A with DFH
+JZ READ6           ; If A == DFH, jump to READ6 (6th line check)
+CPI BFH            ; Compare A with BFH
+JZ READ7           ; If A == BFH, jump to READ7 (7th line check)
+CPI 7FH            ; Compare A with 7FH
+JZ READ8           ; If A == 7FH, jump to READ8 (8th line check)
+
+READ1:             ; Check the first line of the keypad
+STA 2800H          ; Store A in memory location 2800H (probably to activate a line)
+LDA 1800H          ; Load A with the value from memory location 1800H
+ANA B              ; AND A with B (masking operation)
+CPI 07H            ; Compare A with 07H
+JZ PRINT2          ; If A == 07H, jump to PRINT2 (invalid keypress)
+CPI 06H            ; Compare A with 06H
+JZ RED11           ; If A == 06H, jump to RED11 (first key in the first row)
+CPI 05H            ; Compare A with 05H
+JZ RED12           ; If A == 05H, jump to RED12 (second key in the first row)
+JMP PRINT2         ; Otherwise, jump to PRINT2 (exit)
+
+RED11:             ; Check first key of the first row and store code if correct
+LXI H,0B62H        ; Load HL with the address of the code storage area
+MVI A,06H          ; Load A with 06H (the key code)
+MOV M,A            ; Store the value of A in memory location pointed by HL
+INX H              ; Increment HL (point to the next location)
+MVI A,08H          ; Load A with 08H (store additional data)
+MOV M,A            ; Store the value of A in memory location pointed by HL
+JMP PRINT          ; Jump to the PRINT subroutine to show the output
+
+RED12:             ; Check second key of the first row and store code if correct
+LXI H,0B62H        ; Load HL with the address of the code storage area
+MVI A,05H          ; Load A with 05H (the key code)
+MOV M,A            ; Store the value of A in memory location pointed by HL
+INX H              ; Increment HL (point to the next location)
+MVI A,08H          ; Load A with 08H (store additional data)
+MOV M,A            ; Store the value of A in memory location pointed by HL
+JMP PRINT          ; Jump to the PRINT subroutine to show the output
+
+READ2:             ; Check the second line of the keypad
+STA 2800H          ; Store A in memory location 2800H (activate the line)
+LDA 1800H          ; Load A with the value from memory location 1800H
+ANA B              ; AND A with B (masking operation)
+CPI 07H            ; Compare A with 07H
+JZ PRINT2          ; If A == 07H, jump to PRINT2 (invalid keypress)
+CPI 06H            ; Compare A with 06H
+JZ RED21           ; If A == 06H, jump to RED21 (first key in the second row)
+CPI 05H            ; Compare A with 05H
+JZ RED22           ; If A == 05H, jump to RED22 (second key in the second row)
+CPI 03H            ; Compare A with 03H
+JZ RED23           ; If A == 03H, jump to RED23 (third key in the second row)
+JMP PRINT2         ; Otherwise, jump to PRINT2 (exit)
+
+RED21:             ; Check first key of the second row and store code if correct
+LXI H,0B62H        ; Load HL with the address of the code storage area
+MVI A,04H          ; Load A with 04H (the key code)
+MOV M,A            ; Store the value of A in memory location pointed by HL
+INX H              ; Increment HL (point to the next location)
+MVI A,08H          ; Load A with 08H (store additional data)
+MOV M,A            ; Store the value of A in memory location pointed by HL
+JMP PRINT          ; Jump to the PRINT subroutine to show the output
+
+RED22:             ; Check second key of the second row and store code if correct
+LXI H,0B62H        ; Load HL with the address of the code storage area
+MVI A,00H          ; Load A with 00H (the key code)
+MOV M,A            ; Store the value of A in memory location pointed by HL
+INX H              ; Increment HL (point to the next location)
+MVI A,08H          ; Load A with 08H (store additional data)
+MOV M,A            ; Store the value of A in memory location pointed by HL
+JMP PRINT          ; Jump to the PRINT subroutine to show the output
+
+RED23:             ; Check third key of the second row and store code if correct
+LXI H,0B62H        ; Load HL with the address of the code storage area
+MVI A,02H          ; Load A with 02H (the key code)
+MOV M,A            ; Store the value of A in memory location pointed by HL
+INX H              ; Increment HL (point to the next location)
+MVI A,08H          ; Load A with 08H (store additional data)
+MOV M,A            ; Store the value of A in memory location pointed by HL
+JMP PRINT          ; Jump to the PRINT subroutine to show the output
+
+; Repeat similar blocks for all remaining rows (READ3 to READ8)...
+; These sections will continue checking each row and key, storing the appropriate values.
+
+READ3:
+STA 2800H
+LDA 1800H
+ANA B
+CPI 07H
+JZ PRINT2
+CPI 06H
+JZ RED31
+CPI 05H
+JZ RED32
+CPI 03H
+JZ RED33
+JMP PRINT2
+
+RED31:
+LXI H,0B62H
+MVI A,00H
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED32:
+LXI H,0B62H
+MVI A,03H
+MOV M,A
+INX H
+MVI A,08H
+MOV M,A
+JMP PRINT
+
+RED33:
+LXI H,0B62H
+MVI A,01H
+MOV M,A
+INX H
+MVI A,08H
+MOV M,A
+JMP PRINT
+
+READ4:
+STA 2800H
+LDA 1800H
+ANA B
+CPI 07H
+JZ PRINT2
+CPI 06H
+JZ RED41
+CPI 05H
+JZ RED42
+CPI 03H
+JZ RED43
+JMP PRINT2
+
+RED41:
+LXI H,0B62H
+MVI A,01H
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED42:
+LXI H,0B62H
+MVI A,02H
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED43:
+LXI H,0B62H
+MVI A,03H
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+READ5:
+STA 2800H
+LDA 1800H
+ANA B
+CPI 07H
+JZ PRINT2
+CPI 06H
+JZ RED51
+CPI 05H
+JZ RED52
+CPI 03H
+JZ RED53
+JMP PRINT2
+
+RED51:
+LXI H,0B62H
+MVI A,04H
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED52:
+LXI H,0B62H
+MVI A,05H
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED53:
+LXI H,0B62H
+MVI A,06H
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+READ6:
+STA 2800H
+LDA 1800H
+ANA B
+CPI 07H
+JZ PRINT2
+CPI 06H
+JZ RED61
+CPI 05H
+JZ RED62
+CPI 03H
+JZ RED63
+JMP PRINT2
+
+RED61:
+LXI H,0B62H
+MVI A,07H
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED62:
+LXI H,0B62H
+MVI A,08H
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED63:
+LXI H,0B62H
+MVI A,09H
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+READ7:
+STA 2800H
+LDA 1800H
+ANA B
+CPI 07H
+JZ PRINT2
+CPI 06H
+JZ RED71
+CPI 05H
+JZ RED72
+CPI 03H
+JZ RED73
+JMP PRINT2
+
+RED71:
+LXI H,0B62H
+MVI A,0AH
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED72:
+LXI H,0B62H
+MVI A,0BH
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED73:
+LXI H,0B62H
+MVI A,0CH
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+READ8:
+STA 2800H
+LDA 1800H
+ANA B
+CPI 07H
+JZ PRINT2
+CPI 06H
+JZ RED81
+CPI 05H
+JZ RED82
+CPI 03H
+JZ RED83
+JMP PRINT2
+
+RED81:
+LXI H,0B62H
+MVI A,0DH
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED82:
+LXI H,0B62H
+MVI A,0EH
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+RED83:
+LXI H,0B62H
+MVI A,0FH
+MOV M,A
+INX H
+MVI A,00H
+MOV M,A
+JMP PRINT
+
+PRINT:             ; Print the keycode that was pressed
+LXI D,0B62H        ; Load HL with the address of the storage location
+MVI A,FFH          ; Load A with FFH 
+CALL STDM          ; Call STDM 
+PRINT2:            ; Large loop to keep the key pressed on the display
+CALL DCD           ; Call DCD 
+DCR A              ; Decrement A
+JNZ PRINT2         ; Repeat the loop until A reaches 0
+JMP START          ; Restart the process to check for the next input
+
+END
+
+

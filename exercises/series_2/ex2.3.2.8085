@@ -1,0 +1,43 @@
+LXI B,03E8H         ; Initialize register pair BC with 03E8H (1000 in decimal) for DELB delay
+
+STARTT:
+MVI D,FEH           ; Load D with FEH (used for LED operation control)
+MVI E,7FH           ; Load E with 7FH (used for LED operation control)
+CALL KIND           ; Call the KIND routine (used for some keypress check)
+CPI 05H             ; Compare the accumulator (A) with 05H (check if value >= 5)
+JNC SECHECK         ; If A >= 5 (No Carry), jump to SECHECK to check for values >= 9
+JMP PR1             ; Otherwise, jump to PR1 to turn on LEDs for numbers <= 4
+
+SECHECK:            ; Check for values >= 9
+CPI 09H             ; Compare the accumulator (A) with 09H (check if value >= 9)
+JNC RST             ; If A >= 9 (No Carry), jump to RST to reset (no LEDs)
+JMP PR2             ; Otherwise, jump to PR2 to turn on LEDs for numbers between 5 and 8
+
+PR1:                ; Turn on LEDs for numbers <= 4
+MOV A,D             ; Load the value in D into A
+CPI EFH             ; Compare A with EFH (check if the value is still valid)
+JZ STARTT           ; If A == EFH, restart the process (invalid entry)
+STA 3000H           ; Store A in memory address 3000H (LED output)
+CALL DELB           ; Call DELB delay
+CALL DELB           ; Call DELB delay again (double delay for stability)
+RLC                 ; Rotate the accumulator (A) left through carry (shift left for LED control)
+MOV D,A             ; Store the rotated value back into D
+JMP PR1             ; Repeat the loop for next operation
+
+PR2:                ; Turn on LEDs for numbers >= 5 and <= 8
+MOV A,E             ; Load the value in E into A
+CPI F7H             ; Compare A with F7H (check if the value is still valid)
+JZ STARTT           ; If A == F7H, restart the process (invalid entry)
+STA 3000H           ; Store A in memory address 3000H (LED output)
+CALL DELB           ; Call DELB delay
+CALL DELB           ; Call DELB delay again (double delay for stability)
+RRC                 ; Rotate the accumulator (A) right through carry (shift right for LED control)
+MOV E,A             ; Store the rotated value back into E
+JMP PR2             ; Repeat the loop for next operation
+
+RST:                ; If input is invalid, turn off all LEDs and restart
+MVI A,FFH           ; Load A with FFH (turn off all LEDs by setting all bits)
+STA 3000H           ; Store FFH in memory address 3000H (turn off LEDs)
+JMP STARTT          ; Jump back to the beginning of the program to restart
+
+END

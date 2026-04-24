@@ -1,0 +1,54 @@
+START:
+LDA 2000H ;Input from Dip Switches
+LXI B,03E8H ;1000 decimal -> 1 sec delay for DELB. 
+CPI 00H ;Checks if input=0
+JZ START ;If true gets input again
+
+CPI C8H ;Checks if input>199 first
+JNC MSBLED ;Then MSB LED blinks if true
+
+CPI 64H ;If not true then checks if input>99
+JNC LSBLED ;Then LSB LED blinks if true
+
+;If input<99
+MVI B,FFH ;B=(1111 1111) -> All LEDs OFF 
+
+DECA:
+INR B  ;B++. B holds the number of subtractions which gives us the decades (D)
+	;B=0000 DDDD
+SUI 0AH ;Continuous subtractions of 10 from input
+JNC DECA  ;If CY=0 subtract again
+ADI 0AH ;If CY=1 add 10
+MOV C,A ;Save the units (U). C=0000 UUUU
+MOV A,B ;A=0000 DDDD
+RLC ;4 left rotations to get the decades in the first 4 bits
+RLC ;A=DDDD 0000
+RLC
+RLC
+ADD C ;Add the units (0000 UUUU) to A. A=DDDD UUUU
+CMA ;As LEDs are ON on '0' we need the complement of A
+STA 3000H ;LED Output
+CALL DELB
+JMP START ;Recheck Input
+
+;MSB LED blink
+MSBLED:
+MVI A,7FH ;A=0111 1111 -> MSB LED ON
+STA 3000H ;LED Output
+CALL DELB
+MVI A,FFH ;A=1111 1111 -> All LEDs OFF
+STA 3000H ;LED Output with MSB OFF
+CALL DELB
+JMP START ;Recheck input and if it hasn't change the MSB will blink again
+
+;LSB LED blink
+LSBLED:
+MVI A,FEH ;A=1111 1110 -> LSB LED ON
+STA 3000H ;LED Output
+CALL DELB 
+MVI A,FFH ;A=1111 1111 -> All LEDs OFF
+STA 3000H ;LED Output with LSB OFF
+CALL DELB 
+JMP START ;Recheck input and if it hasn't change the LSB will blink again
+
+END
